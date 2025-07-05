@@ -114,38 +114,37 @@ def confirm_transaction_api():
 def customer_order_page():
     return render_template('customer_order.html')
 
-# NEW: API to submit a customer order request
 @app.route('/submit-customer-order', methods=['POST'])
 def submit_customer_order_api():
     data = request.get_json()
-    print(f"DEBUG: Received customer order data: {data}") # NEW DEBUG
-    customer_name = data.get('customerName')
-    file_name = data.get('fileName')
-    file_url = data.get('fileUrl')
-    note = data.get('note')
-    print(f"DEBUG: Extracted fileName: '{file_name}', fileUrl: '{file_url}', note: '{note}'") # NEW DEBUG
-    items_data = data.get('items', [])
 
-    if not customer_name or not file_name or not items_data:
-        return jsonify({'message': 'Missing required customer info or items.'}), 400
+    items_data = data.get('items', [])
+    if not items_data:
+        return jsonify({'message': 'Missing printing items for this order.'}), 400
+
+    # If top-level fields are missing, fall back to the first item’s values
+    first_item = items_data[0] if items_data else {}
+
+    customer_name = data.get('customerName') or first_item.get('customerName') or 'N/A'
+    file_name = data.get('fileName') or first_item.get('fileName') or 'N/A'
+    file_url = data.get('fileUrl') or first_item.get('fileUrl') or 'N/A'
+    note = data.get('note') or first_item.get('note') or 'N/A'
 
     try:
-        # Create CustomerOrderRequest header
         order_request = CustomerOrderRequest(
             customer_name=customer_name,
             file_name=file_name,
             file_url=file_url,
             note=note,
-            request_date=datetime.now(), # Use current datetime for request_date
-            status='Pending' # Default status
+            request_date=datetime.now(),
+            status='Pending'
         )
         db.session.add(order_request)
-        db.session.flush() # Flush to get request_id before adding items
+        db.session.flush()
 
-        # Create CustomerOrderItems
         for item_data in items_data:
             item = CustomerOrderItem(
-                request_header_id=order_request.request_id, # Link to the new request
+                request_header_id=order_request.request_id,
                 paper_type=item_data['paperType'],
                 color=item_data['color'],
                 pages=item_data['pages'],
@@ -159,6 +158,8 @@ def submit_customer_order_api():
     except Exception as e:
         db.session.rollback()
         return jsonify({'message': f'Failed to submit order request: {str(e)}'}), 500
+
+
 
 
 # API to get all records for the main record table

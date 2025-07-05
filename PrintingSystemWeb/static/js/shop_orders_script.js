@@ -286,7 +286,7 @@ function setupOrdersEventListeners() {
                         window.location.reload();
                     }
                 })
-                .catch(error => console.error('Error resetting records:', error));
+                .catch(error => console.error('Error reasetting records:', error));
         }
     });
 }

@@ -117,9 +117,7 @@ function addItem() {
     row.innerHTML = `
         <td>${customerName}</td>
         <td class="file-name-column">${fileName}</td>
-        <td class="url-column">
-            ${fileUrl ? `<a href="${fileUrl}" target="_blank" rel="noopener noreferrer" class="file-url-link">🔗 Link</a>` : 'N/A'}
-        </td>
+        <td class="url-column">${fileUrl ? `<a href="${fileUrl}" target="_blank" rel="noopener noreferrer" class="file-url-link">🔗 Link</a>` : 'N/A'}</td>
         <td class="notes-column">${note || 'N/A'}</td>
         <td>${paperType}</td>
         <td>${color}</td>
@@ -189,10 +187,11 @@ function deleteItem(button) {
 async function submitOrderRequest() {
     // --- Get CURRENT customer info field values from inputs ---
     // Make variables optional, default to 'N/A' if empty after trim
-    const customerName = customerNameInput.value.trim() || 'N/A'; // MODIFIED: Optional, defaults to 'N/A'
-    const fileName = fileNameInput.value.trim() || 'N/A';         // MODIFIED: Optional, defaults to 'N/A'
-    const fileUrl = fileUrlInput.value.trim() || 'N/A';           // MODIFIED: Optional, defaults to 'N/A'
-    const note = noteInput.value.trim() || 'N/A';                 // MODIFIED: Optional, defaults to 'N/A'
+    const customerName = customerNameInput.value.trim();
+    const fileName = fileNameInput.value.trim();
+    const fileUrl = fileUrlInput.value.trim();
+    const note = noteInput.value.trim();
+
 
     // --- In-depth Debugging (keep for your reference, or remove if confident) ---
     console.log("DEBUG: Submit Order Validation Check - File Name Diagnostics:");
@@ -217,17 +216,20 @@ async function submitOrderRequest() {
     // }
     // No explicit return here, as per your request to submit without restriction on these fields
 
-    const requestedItems = [];
-    itemsInTransactionTableBody.querySelectorAll('tr').forEach(row => {
-        const cells = row.querySelectorAll('td');
-        requestedItems.push({
-            paperType: cells[4].textContent,
-            color: cells[5].textContent,
-            pages: parseInt(cells[6].textContent),
-            pricePerPage: parseFloat(cells[7].textContent.replace('₱', '').replace(/,/g, '')),
-            itemTotal: parseFloat(cells[8].textContent.replace('₱', '').replace(/,/g, ''))
+        const requestedItems = [];
+        itemsInTransactionTableBody.querySelectorAll('tr').forEach(row => {
+            const original = JSON.parse(row.dataset.originalValues);
+            requestedItems.push({
+                paperType: original.paperType,
+                color: original.color,
+                pages: parseInt(original.pages),
+                pricePerPage: parseFloat(original.pricePerPage),
+                itemTotal: parseFloat(original.total)
+            });
         });
-    });
+
+
+
 
     if (requestedItems.length === 0) {
         alert("Please add at least one printing item to your request.");
